@@ -1,14 +1,7 @@
 Associate Name,Shift,Ulearn,Due Date,Managers
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Code of Conduct for New Associates,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Hazardous Materials Foundations,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Workplace Respect & Harassment Prevention,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,ADA - Hourly,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Fire Safety – Supply Chain,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Lock Out Tag Out – Affected/Supply Chain,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Supply Chain & Delivery Disciplinary Action Change Management,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Violence Free Workplace Policy Acknowledgement,1/4/2026,
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Supply Chain & Manufacturing Spill Cleanup,3/5/2026,
-PRISTA SIM,hello,*VAS Packing Hazardous Material Labeling,3/9/2026,Donald Winston
+FRANCESCA DES,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,*Hazardous Materials Foundations,1/26/2026,
+FRANCESCA DES,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,*Supply Chain & Manufacturing Spill Cleanup,1/26/2026,
+PRISTA SIM,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,3/9/2026,Donald Winston
 KY'RIE AAR,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,3/23/2026,James Bartosh
 NIJAELA CUN,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,3/23/2026,ANTONIA VAZQUEZ
 MARIO AGU,Supply Chain Flex Warehouse Worker_S7,AI at Walmart - Field,3/25/2026,Gregg Sidisky
@@ -94,6 +87,7 @@ WOODLINE JOS,WAREHOUSE WORKER_S5,DA0  and Elevated Disciplinary Actions,6/6/2026
 YVENIE ALC,WAREHOUSE WORKER_S4,DA0  and Elevated Disciplinary Actions,6/6/2026,Cit DuBreucq
 SAINT PIERRE JOS,WAREHOUSE WORKER_S4,DA0  and Elevated Disciplinary Actions,6/9/2026,James Denney
 ORANNE ANT,Supply Chain Flex Warehouse Worker_S7,DA0  and Elevated Disciplinary Actions,6/11/2026,MUHAMMAD KAPADIA
+Bryan Wil,AREA MANAGER - FLOOR,*Code of Conduct - Refresher,6/27/2026,Andrew McCorkle
 ABNER JEA,WAREHOUSE WORKER_S5,*Hazardous Materials Foundations,6/30/2026,Wesley Stanalonis
 GODSON PIE,WAREHOUSE WORKER_S5,Information Security - Annual (Field),7/1/2026,Gregg Sidisky
 ROSE BERTHA SAI,WAREHOUSE WORKER_S4,*Workplace Respect & Harassment Prevention,7/1/2026,James Denney
@@ -122,11 +116,11 @@ YVENIE ALC,WAREHOUSE WORKER_S4,*Code of Conduct Refresher (Field Non-Management)
 ERNEST ATI,WAREHOUSE WORKER_S5,Workplace Violence Awareness Video,8/1/2026,Alex Gann
 PETER JOHN DUM,.COM QUALITY ASSURANCE ASSOC (SORTABLE)_S5,*Hazardous Materials Identification--Supply Chain,8/1/2026,John Winter
 CHERY JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,*Hazardous Materials Foundations,8/2/2026,James Denney
-Yasnelis Alm,"LEAD, OPERATIONS (ALL DISTRIBUTION/FULFILLMENT CENTERS) - LOGISTICS_S4",Workplace Violence Awareness Video,8/4/2026,James Denney
 Amber Ell,CONTINUOUS SKILLS DEVELOPMENT LEAD_S2,Workplace Violence Awareness Video,8/6/2026,Travis Jennings
 PIERRE LUCKNER PLA,Supply Chain Flex Warehouse Worker_S7,Workplace Violence Awareness Video,8/6/2026,Luka Gogia
 JOSETTE JEA,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,8/10/2026,Harrison Chan
 YCELENE ULY,Supply Chain Flex Warehouse Worker_S7,Workplace Violence Awareness Video,8/10/2026,Bryan Williams
+LADAIJIA BEA,AREA MANAGER - FLOOR,*Code of Conduct - Refresher,8/11/2026,Danny Bowes
 PHANIOLA EXA,.COM QUALITY ASSURANCE ASSOC (SORTABLE)_S5,*Workplace Respect & Harassment Prevention,8/11/2026,John Winter
 ROBENTZ DOR,WAREHOUSE WORKER_S5,*Workplace Respect & Harassment Prevention,8/11/2026,ANTONIA VAZQUEZ
 CHILORVE MES,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S5,*Hazardous Materials Foundations,8/16/2026,LADAIJIA BEASLEY
@@ -137,10 +131,8 @@ JOHN MARCLEY MON,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S5,*Hazardous Material
 MARIECARME DOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S5,*Hazardous Materials Foundations,8/16/2026,Alex Gann
 ROBENTZ DOR,WAREHOUSE WORKER_S5,*Hazardous Materials Foundations,8/16/2026,ANTONIA VAZQUEZ
 ROBENTZ DOR,WAREHOUSE WORKER_S5,*Supply Chain & Manufacturing Spill Cleanup,8/16/2026,ANTONIA VAZQUEZ
-Yasnelis Alm,"LEAD, OPERATIONS (ALL DISTRIBUTION/FULFILLMENT CENTERS) - LOGISTICS_S4",*Supply Chain & Manufacturing Spill Cleanup,8/16/2026,James Denney
 EDI AQU,WAREHOUSE WORKER_S4,*Hazardous Materials Foundations,8/17/2026,Randall Metcalf
 EDI AQU,WAREHOUSE WORKER_S4,*Supply Chain & Manufacturing Spill Cleanup,8/17/2026,Randall Metcalf
-GLORIA CAP,WAREHOUSE WORKER_S4,*Supply Chain & Manufacturing Spill Cleanup,8/17/2026,Luka Gogia
 KETTIA DES,WAREHOUSE WORKER_S2,*Hazardous Materials Foundations,8/17/2026,Robert Haller
 PETER JOHN DUM,.COM QUALITY ASSURANCE ASSOC (SORTABLE)_S5,"*Hazardous Materials Packaging, Labeling, and Shipping--Supply Chain",8/17/2026,John Winter
 PIERRE LUCKNER PLA,Supply Chain Flex Warehouse Worker_S7,*Hazardous Materials Foundations,8/17/2026,Luka Gogia
@@ -184,14 +176,13 @@ YVENIE ALC,WAREHOUSE WORKER_S4,*Hazardous Materials Foundations,8/18/2026,Cit Du
 YVENIE ALC,WAREHOUSE WORKER_S4,*Supply Chain & Manufacturing Spill Cleanup,8/18/2026,Cit DuBreucq
 YVENIE ALC,WAREHOUSE WORKER_S4,*Workplace Respect & Harassment Prevention,8/18/2026,Cit DuBreucq
 YVENIE ALC,WAREHOUSE WORKER_S4,Workplace Violence Awareness Video,8/18/2026,Cit DuBreucq
+Brittany Ear,AREA MANAGER - FLOOR,*Code of Conduct - Refresher,8/19/2026,David Walden
 CARLINE GAB,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/19/2026,Jason Stoops
 ERTA PAU,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/19/2026,Jason Stoops
 MARIE ROSE JOI,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/19/2026,Jason Stoops
 MESLINE NIC,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/19/2026,Jason Stoops
 MINDA JUL,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/19/2026,Jason Stoops
 NATACHA ELI,Supply Chain Flex Warehouse Worker_S7,Workplace Violence Awareness Video,8/19/2026,Luka Gogia
-Andrew Eat,AREA MANAGER - FLOOR,*Hazardous Materials Identification--Supply Chain,8/20/2026,Shawn Errichetto
-Andrew Eat,AREA MANAGER - FLOOR,"*Hazardous Materials Packaging, Labeling, and Shipping--Supply Chain",8/20/2026,Shawn Errichetto
 ROSA DEL CARMEN SAM,Supply Chain Flex Warehouse Worker_S7,Workplace Violence Awareness Video,8/20/2026,Jason Branchman
 CLARISE PIE,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Workplace Respect & Harassment Prevention for New Associates,8/21/2026,Vincent McCall
 CLARISE PIE,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,AI at Walmart - Field,8/21/2026,Vincent McCall
@@ -203,15 +194,12 @@ JESULA NOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Workplace Respect & Hara
 JESULA NOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,AI at Walmart - Field,8/21/2026,Jason Stoops
 JESULA NOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,Information Security - Annual (Field),8/21/2026,Jason Stoops
 JOSEPH EAS,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Workplace Respect & Harassment Prevention for New Associates,8/21/2026,ALAHNA SOLLENBERGER
-JOSEPH EAS,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,AI at Walmart - Field,8/21/2026,ALAHNA SOLLENBERGER
-JOSEPH EAS,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Information Security - Annual (Field),8/21/2026,ALAHNA SOLLENBERGER
 ODERSON CLI,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,AI at Walmart - Field,8/21/2026,Jason Stoops
 TY WIS,AREA MANAGER - FLOOR,*Interacting with Third-party Workers - Field,8/21/2026,David Walden
 Jose Luis Pol,WAREHOUSE WORKER_S4,*Hazardous Materials Foundations,8/22/2026,Luka Gogia
 Jose Luis Pol,WAREHOUSE WORKER_S4,*Supply Chain & Manufacturing Spill Cleanup,8/22/2026,Luka Gogia
 BRINEL DOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S5,Fire Safety – Supply Chain,8/23/2026,James Ting
 BRINEL DOR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S5,Supply Chain & Delivery Disciplinary Action Change Management,8/23/2026,James Ting
-CHARLIE VAL,"LEAD, OPERATIONS (ALL DISTRIBUTION/FULFILLMENT CENTERS) - LOGISTICS_S4",*Supply Chain SPCC,8/23/2026,Taylor Lightner
 CHRISTELA JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,ADA - Hourly,8/23/2026,James Denney
 CHRISTELA JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,Lock Out Tag Out – Affected/Supply Chain,8/23/2026,James Denney
 CHRISTELA JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,Violence Free Workplace Policy Acknowledgement,8/23/2026,James Denney
@@ -260,7 +248,6 @@ ROSA DEL CARMEN SAM,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous
 ROSE PIE,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,8/24/2026,Scott Bailey
 SERGO BEN,YARD DRIVER - ON PROPERTY_S2,*Hazardous Waste - Supply Chain & Manufacturing,8/24/2026,Eric Cao
 WADSON RES,Supply Chain Flex Warehouse Worker_S7,*VAS Packing Hazardous Material Labeling,8/24/2026,Jason Branchman
-ABRAHAN MEN,WAREHOUSE WORKER_S1,*Code of Conduct Refresher (Field Non-Management),8/25/2026,Bryan Williams
 CHERY JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,*Workplace Respect & Harassment Prevention for New Associates,8/25/2026,James Denney
 CHERY JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,AI at Walmart - Field,8/25/2026,James Denney
 CHERY JEA,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,Information Security - Annual (Field),8/25/2026,James Denney
@@ -279,5 +266,9 @@ MIKELSON FIA,WAREHOUSE WORKER_S5,*Code of Conduct Refresher (Field Non-Managemen
 TORICE ALC,WAREHOUSE WORKER_S5,*Code of Conduct Refresher (Field Non-Management),8/25/2026,TY WISHNOW
 TRACEY GAR,CONTINUOUS SKILLS DEVELOPMENT LEAD_S4,Workplace Violence Awareness Video,8/25/2026,KENNETH DEVITO
 VANESSA ELY,Supply Chain Flex Warehouse Worker_S7,Supply Chain & Delivery Disciplinary Action Change Management,8/25/2026,TY WISHNOW
+Vickie Sto,REGIONAL SYSTEMS OPERATOR_S2,Workplace Violence Awareness Video,8/25/2026,KERVEN MICHEL J NICOLAS
 WOODLINE JOS,WAREHOUSE WORKER_S5,*Code of Conduct Refresher (Field Non-Management),8/25/2026,James Bartosh
-RICARDO DAR,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,Workplace Violence Awareness Video,12/20/2025,
+CHERYL SMI,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S1,*Hazardous Materials Foundations,8/26/2026,Vincent McCall
+PIERRE LOUIS POI,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/26/2026,Jason Stoops
+ROUSSELET BER,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S2,*Hazardous Materials Foundations,8/26/2026,Jason Stoops
+FRANCESCA DES,SEASONAL WAREHOUSE ASSOCIATE - LOGISTICS_S4,Workplace Violence Awareness Video,1/1/2025,
