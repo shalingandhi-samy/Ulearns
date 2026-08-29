@@ -21,7 +21,24 @@ open it in a browser or host it anywhere static files are served (e.g. Puppy Pag
 
 ## Usage
 
-1. Drop your latest export into `ulearn_data.csv` (same 5-column format: `Associate Name,
+### From a raw ULearn Excel export (e.g. `8.25 ulearn.xlsx`, columns: `Associate,
+Job Description, Item Name, Due Date, Manager`)
+
+1. Pull the sheet data into `raw_ulearn_export.csv` (same 5 raw columns, Due Date
+   as the Excel serial number).
+2. Convert it into the dashboard's format:
+
+   ```bash
+   python convert_export.py
+   ```
+
+   This maps columns to `Associate Name, Shift, Ulearn, Due Date, Managers` and
+   converts Excel serial dates to `MM/DD/YYYY`.
+3. Regenerate the dashboard: `python build_dashboard.py`.
+
+### From an already-formatted CSV
+
+1. Drop your latest export into `ulearn_data.csv` (5-column format: `Associate Name,
    Shift, Ulearn, Due Date, Managers`).
 2. Regenerate the dashboard:
 

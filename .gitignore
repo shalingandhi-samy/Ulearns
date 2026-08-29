@@ -4,3 +4,5 @@ __pycache__/
 venv/
 .env
 ulearn_data.csv
+raw_ulearn_export.csv
+*.xlsx
