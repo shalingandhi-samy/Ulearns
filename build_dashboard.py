@@ -10,6 +10,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "ulearn_data.csv"
+ONCLOCK_PATH = BASE_DIR / "flex_onclock.csv"
 OUT_PATH = BASE_DIR / "ulearn_dashboard.html"
 
 TODAY = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -33,7 +34,42 @@ def parse_date(s: str):
         return None
 
 
+def name_candidates(full_name: str):
+    """ULearn associate names are truncated to full given name(s) + first 3
+    letters of the surname (e.g. 'NATACHA ELIACIN' -> 'NATACHA ELI'). Given a
+    full name from an external roster (like Drax), generate every truncated
+    form so we can match it against the ULearn dataset's convention."""
+    words = full_name.upper().split()
+    out = {full_name.upper()}
+    for k in range(1, len(words)):
+        given = " ".join(words[:k])
+        out.add(f"{given} {words[k][:3]}")
+    return out
+
+
+def load_onclock_roster(path: Path):
+    """Loads an optional Drax on-clock snapshot (Associate, WIN, Status, Shift,
+    PulledAt columns). Returns (lookup_dict, pulled_at_str) where lookup_dict
+    maps every truncated-name candidate -> roster row. Missing file = empty
+    roster (Flex tab will just show all S7 associates with a warning banner)."""
+    lookup = {}
+    pulled_at = None
+    if not path.exists():
+        return lookup, pulled_at
+    with path.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            full_name = row["Associate"].strip()
+            if not full_name:
+                continue
+            pulled_at = row.get("PulledAt", "").strip() or pulled_at
+            for cand in name_candidates(full_name):
+                lookup[cand] = row
+    return lookup, pulled_at
+
+
 def main():
+    onclock_lookup, onclock_pulled_at = load_onclock_roster(ONCLOCK_PATH)
+
     rows = []
     with CSV_PATH.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -48,6 +84,7 @@ def main():
             due_dt = parse_date(due_raw)
             shift_code = extract_shift(shift_raw)
             overdue = bool(due_dt and due_dt < TODAY)
+            onclock_row = onclock_lookup.get(name.upper())
             rows.append({
                 "name": name,
                 "shift_raw": shift_raw,
@@ -57,6 +94,7 @@ def main():
                 "due_sort": due_dt.strftime("%Y-%m-%d") if due_dt else "9999-99-99",
                 "manager": manager,
                 "overdue": overdue,
+                "on_clock": onclock_row is not None,
             })
 
     total = len(rows)
@@ -69,6 +107,13 @@ def main():
     data_json = json.dumps(rows)
     shifts_json = json.dumps(shifts)
     managers_json = json.dumps(managers)
+    onclock_count = len(onclock_lookup)
+    onclock_note = (
+        f"Live on-clock snapshot pulled from Drax Starting Lineup as of {onclock_pulled_at}."
+        if onclock_pulled_at else
+        " No Drax on-clock snapshot loaded (missing flex_onclock.csv) — showing ALL S7 flex "
+        "associates with pending trainings, regardless of clock status."
+    )
 
     html = HTML_TEMPLATE.format(
         data_json=data_json,
@@ -79,9 +124,10 @@ def main():
         unique_managers=unique_managers,
         overdue_count=overdue_count,
         today_str=TODAY.strftime("%B %d, %Y"),
+        onclock_note=onclock_note,
     )
     OUT_PATH.write_text(html, encoding="utf-8")
-    print(f"Wrote {OUT_PATH} ({total} rows, {unique_assoc} associates, {overdue_count} overdue)")
+    print(f"Wrote {OUT_PATH} ({total} rows, {unique_assoc} associates, {overdue_count} overdue, {onclock_count} on-clock flex names loaded)")
 
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
@@ -114,6 +160,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </header>
 
 <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+  <!-- Tabs -->
+  <section class="flex gap-2 border-b border-gray-200">
+    <button type="button" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-[#0053e2] text-[#0053e2]" data-tab="all">All Associates</button>
+    <button type="button" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="flex">Flex Associates on Clock</button>
+  </section>
+  <div id="onclockNote" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{onclock_note}</div>
 
   <!-- Executive Insights (top) -->
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -230,12 +283,14 @@ const MANAGERS = {managers_json};
 let sortKey = "due_sort";
 let sortDir = 1;
 let selectedManagers = new Set();
+let activeTab = "all";
 
 const shiftFilter = document.getElementById("shiftFilter");
 const searchBox = document.getElementById("searchBox");
 const overdueOnly = document.getElementById("overdueOnly");
 const tableBody = document.getElementById("tableBody");
 const rowCount = document.getElementById("rowCount");
+const tabButtons = document.querySelectorAll(".tab-btn");
 
 const managerFilterBtn = document.getElementById("managerFilterBtn");
 const managerFilterPanel = document.getElementById("managerFilterPanel");
@@ -244,6 +299,32 @@ const managerSearchBox = document.getElementById("managerSearchBox");
 const managerCheckboxList = document.getElementById("managerCheckboxList");
 const managerSelectAll = document.getElementById("managerSelectAll");
 const managerSelectNone = document.getElementById("managerSelectNone");
+const onclockNote = document.getElementById("onclockNote");
+
+tabButtons.forEach(btn => {{
+  btn.addEventListener("click", () => {{
+    activeTab = btn.dataset.tab;
+    tabButtons.forEach(b => {{
+      const active = b === btn;
+      b.classList.toggle("border-[#0053e2]", active);
+      b.classList.toggle("text-[#0053e2]", active);
+      b.classList.toggle("border-transparent", !active);
+      b.classList.toggle("text-gray-500", !active);
+    }});
+    // Flex tab is scoped to associates who are S7 (flex role) AND currently
+    // on-clock per the Drax snapshot -- the shift dropdown would just be a
+    // redundant/confusing no-op there, so reset + disable it.
+    if (activeTab === "flex") {{
+      shiftFilter.value = "";
+      shiftFilter.disabled = true;
+      onclockNote.classList.remove("hidden");
+    }} else {{
+      shiftFilter.disabled = false;
+      onclockNote.classList.add("hidden");
+    }}
+    renderTable();
+  }});
+}});
 
 function populateSelect(sel, values) {{
   values.forEach(v => {{
@@ -322,6 +403,7 @@ function getFiltered() {{
   const q = searchBox.value.trim().toLowerCase();
   const od = overdueOnly.checked;
   let rows = RAW_DATA.filter(r => {{
+    if (activeTab === "flex" && (r.shift !== "S7" || !r.on_clock)) return false;
     if (selectedManagers.size > 0 && !selectedManagers.has(r.manager)) return false;
     if (s && r.shift !== s) return false;
     if (od && !r.overdue) return false;

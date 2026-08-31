@@ -48,6 +48,37 @@ Job Description, Item Name, Due Date, Manager`)
 
 3. Open `ulearn_dashboard.html` in a browser (or double-click it).
 
+## Flex Associates on Clock tab
+
+The dashboard has a second tab, Flex Associates on Clock, scoped to associates
+who are both of the following: a Flex associate per the ULearn data (job
+description ends in _S7), and currently clocked in per Drax Starting Lineup.
+Note that Drax uses its own shift code for Flex, S6, which is a completely
+different numbering scheme from ULearn's _S7 role suffix -- don't confuse the two.
+
+Being Flex (_S7 in ULearn) does not mean someone is on the clock right now --
+that has to be cross-checked against Drax separately, since on-clock status
+changes throughout the day.
+
+### Refreshing the on-clock snapshot
+
+1. Get today's Drax Starting Lineup URL for the site/date/areas you care about,
+   e.g. https://drax.walmart.com/startinglineup/?date=YYYY-MM-DD&area=...&shift=S6
+2. Ask a browser-automation agent (qa-kitten) to load that URL and extract every
+   row where shift equals S6 and status is In or In minus Late (name, WIN,
+   status, shift).
+3. Save the results into flex_onclock.csv with columns: Associate, WIN, Status,
+   Shift, PulledAt (Associate = full untruncated name as shown on Drax; PulledAt
+   = a human-readable pull date/label).
+4. Re-run python build_dashboard.py. It matches Drax's full names against
+   ULearn's truncated-name convention automatically and tags each pending item
+   with whether that associate is currently on-clock.
+5. If flex_onclock.csv is missing or stale, the Flex tab shows a warning banner
+   and falls back to listing all _S7 associates regardless of clock status.
+
+flex_onclock.csv is a point-in-time snapshot, not live -- re-pull it whenever you
+need current-shift accuracy.
+
 ## Data notes
 
 ⚠️ **This CSV contains real associate and manager names.** Keep this repo **private**
@@ -58,8 +89,9 @@ embeds the raw data as inline JSON — treat it with the same care as the CSV.
 
 | File | Purpose |
 |---|---|
-| `build_dashboard.py` | Parses `ulearn_data.csv` and generates `ulearn_dashboard.html` |
+| `build_dashboard.py` | Parses `ulearn_data.csv` (+ optional `flex_onclock.csv`) and generates `ulearn_dashboard.html` |
 | `ulearn_data.csv` | Source data export |
+| `flex_onclock.csv` | Optional Drax on-clock snapshot for the Flex tab (Associate, WIN, Status, Shift, PulledAt) |
 | `ulearn_dashboard.html` | Generated static dashboard (open this in a browser) |
 
 ---

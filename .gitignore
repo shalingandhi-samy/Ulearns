@@ -5,4 +5,5 @@ venv/
 .env
 ulearn_data.csv
 raw_ulearn_export.csv
+flex_onclock.csv
 *.xlsx
