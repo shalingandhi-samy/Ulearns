@@ -30,10 +30,24 @@ def main():
         reader = csv.DictReader(f_in)
         rows = list(reader)
 
+    # Guard against exact-duplicate rows -- OneDrive/Graph chunked pulls have
+    # occasionally repeated a window of rows verbatim; a real pending ULearn
+    # never has the same associate/course/due-date/manager listed twice.
+    seen = set()
+    deduped = []
+    for r in rows:
+        key = (r["Associate"].strip(), r["Job Description"].strip(),
+               r["Item Name"].strip(), r["Due Date"].strip(), r["Manager"].strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(r)
+    dupe_count = len(rows) - len(deduped)
+
     with DST.open("w", newline="", encoding="utf-8") as f_out:
         writer = csv.writer(f_out)
         writer.writerow(["Associate Name", "Shift", "Ulearn", "Due Date", "Managers"])
-        for r in rows:
+        for r in deduped:
             writer.writerow([
                 r["Associate"].strip(),
                 r["Job Description"].strip(),
@@ -42,7 +56,7 @@ def main():
                 r["Manager"].strip(),
             ])
 
-    print(f"Wrote {DST} ({len(rows)} rows)")
+    print(f"Wrote {DST} ({len(deduped)} rows, {dupe_count} exact-duplicate rows dropped)")
 
 
 if __name__ == "__main__":
