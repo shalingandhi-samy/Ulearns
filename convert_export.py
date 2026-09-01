@@ -22,7 +22,15 @@ def serial_to_date(serial: str) -> str:
         dt = EXCEL_EPOCH + timedelta(days=int(float(serial)))
         return dt.strftime("%m/%d/%Y")
     except ValueError:
-        return serial  # already a plain date string, leave as-is
+        pass
+    # Not a serial number -- likely already a plain date string (e.g. Graph
+    # returned "3/9/2026" instead of a serial). Normalize to zero-padded
+    # MM/DD/YYYY for consistent display; if that also fails, leave as-is.
+    try:
+        dt = datetime.strptime(serial, "%m/%d/%Y")
+        return dt.strftime("%m/%d/%Y")
+    except ValueError:
+        return serial
 
 
 def main():
