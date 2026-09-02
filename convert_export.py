@@ -60,6 +60,31 @@ def get(row: dict, *names: str) -> str:
     return ""
 
 
+def fresh_flags_from_due_date(due_str: str) -> tuple[str, str, str, str, str]:
+    """Recompute the (Late, 7, 14, 30, 60) flags straight from the due date
+    vs. today, instead of trusting whatever flag the source sheet happened
+    to have set. The source sheet accumulates one row per historical pull --
+    the SAME requirement gets logged repeatedly as the countdown ticks from
+    60->30->14->7 days, so any single row's flags reflect whenever THAT row
+    was captured, not necessarily today. Duplicates collapse to one row
+    (see dedup below); this makes sure that one row's status is *current*,
+    not whichever stale snapshot happened to survive the dedup."""
+    try:
+        due = datetime.strptime(due_str, "%m/%d/%Y")
+    except ValueError:
+        return ("", "", "", "", "")
+    delta = (due.date() - datetime.now().date()).days
+    if delta < 0:
+        return ("X", "", "", "", "")
+    if delta <= 7:
+        return ("", "X", "", "", "")
+    if delta <= 14:
+        return ("", "", "X", "", "")
+    if delta <= 30:
+        return ("", "", "", "X", "")
+    return ("", "", "", "", "X")
+
+
 def load_rows_from_xlsx() -> list[dict]:
     """Read the source workbook directly with pandas. Returns rows in the
     same dict-of-strings shape as csv.DictReader would, so downstream code
@@ -118,17 +143,15 @@ def main():
         writer.writerow(["Associate Name", "Shift", "Ulearn", "Due Date", "Managers",
                           "Late", "DueSoon7", "DueSoon14", "DueSoon30", "DueSoon60"])
         for r in deduped:
+            due_date = serial_to_date(get(r, "Due Date"))
+            late, d7, d14, d30, d60 = fresh_flags_from_due_date(due_date)
             writer.writerow([
                 get(r, "Associate"),
                 get(r, "Job Description"),
                 get(r, "Item Name"),
-                serial_to_date(get(r, "Due Date")),
+                due_date,
                 get(r, "Manager"),
-                get(r, "Late"),
-                get(r, "Next 7 Days"),
-                get(r, "Next 14 Days"),
-                get(r, "Next 30 Days"),
-                get(r, "Next 60 Days"),
+                late, d7, d14, d30, d60,
             ])
 
     print(f"Wrote {DST} ({len(deduped)} rows, {dupe_count} exact-duplicate rows dropped)")

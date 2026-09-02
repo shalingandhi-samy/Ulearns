@@ -279,16 +279,18 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <label for="searchBox" class="block text-xs font-semibold text-gray-500 mb-1">Search (name or course)</label>
         <input id="searchBox" type="text" placeholder="Type to search..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
       </div>
-      <div class="flex-1 min-w-[160px]">
-        <label for="statusFilter" class="block text-xs font-semibold text-gray-500 mb-1">Status</label>
-        <select id="statusFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
-          <option value="">All Statuses</option>
-          <option value="overdue">Past Due</option>
-          <option value="due_7">Due in 7 Days</option>
-          <option value="due_14">Due in 14 Days</option>
-          <option value="due_30">Due in 30 Days</option>
-          <option value="due_60">Due in 60 Days</option>
-        </select>
+      <div class="flex-1 min-w-[190px] relative" id="statusFilterWrap">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+        <button type="button" id="statusFilterBtn" class="w-full text-left border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
+          <span id="statusFilterLabel">All Statuses</span>
+        </button>
+        <div id="statusFilterPanel" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+          <div class="flex justify-between text-xs mb-2">
+            <button type="button" id="statusSelectAll" class="text-[#0053e2] font-semibold hover:underline">Select all</button>
+            <button type="button" id="statusSelectNone" class="text-gray-500 font-semibold hover:underline">Clear</button>
+          </div>
+          <div id="statusCheckboxList" class="space-y-1"></div>
+        </div>
       </div>
       <button id="clearFilters" class="text-sm text-[#0053e2] font-semibold hover:underline pb-2">Clear filters</button>
       <button id="downloadExcel" class="flex items-center gap-1 text-sm bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-3 py-2">
@@ -354,11 +356,20 @@ const MANAGERS = {managers_json};
 let sortKey = "due_sort";
 let sortDir = 1;
 let selectedManagers = new Set();
+let selectedStatuses = new Set();
 let activeTab = "all";
+
+const STATUS_META = {{
+  overdue: {{ label: "Past Due", badge: "bg-red-100 text-red-700", row: "bg-red-50" }},
+  due_7: {{ label: "Due in 7 Days", badge: "bg-orange-100 text-orange-800", row: "bg-orange-50" }},
+  due_14: {{ label: "Due in 14 Days", badge: "bg-amber-100 text-amber-800", row: "" }},
+  due_30: {{ label: "Due in 30 Days", badge: "bg-cyan-100 text-cyan-800", row: "" }},
+  due_60: {{ label: "Due in 60 Days", badge: "bg-slate-100 text-slate-700", row: "" }},
+}};
+const STATUS_ORDER = ["overdue", "due_7", "due_14", "due_30", "due_60"];
 
 const shiftFilter = document.getElementById("shiftFilter");
 const searchBox = document.getElementById("searchBox");
-const statusFilter = document.getElementById("statusFilter");
 const tableBody = document.getElementById("tableBody");
 const rowCount = document.getElementById("rowCount");
 const tabButtons = document.querySelectorAll(".tab-btn");
@@ -371,6 +382,13 @@ const managerCheckboxList = document.getElementById("managerCheckboxList");
 const managerSelectAll = document.getElementById("managerSelectAll");
 const managerSelectNone = document.getElementById("managerSelectNone");
 const onclockNote = document.getElementById("onclockNote");
+
+const statusFilterBtn = document.getElementById("statusFilterBtn");
+const statusFilterPanel = document.getElementById("statusFilterPanel");
+const statusFilterLabel = document.getElementById("statusFilterLabel");
+const statusCheckboxList = document.getElementById("statusCheckboxList");
+const statusSelectAll = document.getElementById("statusSelectAll");
+const statusSelectNone = document.getElementById("statusSelectNone");
 
 tabButtons.forEach(btn => {{
   btn.addEventListener("click", () => {{
@@ -469,15 +487,70 @@ managerSelectNone.addEventListener("click", () => {{
   renderTable();
 }});
 
+function updateStatusLabel() {{
+  const n = selectedStatuses.size;
+  if (n === 0) {{
+    statusFilterLabel.textContent = "All Statuses";
+  }} else if (n === 1) {{
+    statusFilterLabel.textContent = STATUS_META[[...selectedStatuses][0]].label;
+  }} else {{
+    statusFilterLabel.textContent = n + " statuses selected";
+  }}
+}}
+
+function renderStatusCheckboxes() {{
+  statusCheckboxList.innerHTML = "";
+  STATUS_ORDER.forEach(key => {{
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2 text-sm px-1 py-0.5 rounded hover:bg-blue-50 cursor-pointer";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "statusCheckbox w-4 h-4 accent-[#0053e2]";
+    cb.value = key;
+    cb.checked = selectedStatuses.has(key);
+    cb.addEventListener("change", () => {{
+      if (cb.checked) {{ selectedStatuses.add(key); }} else {{ selectedStatuses.delete(key); }}
+      updateStatusLabel();
+      renderTable();
+    }});
+    const span = document.createElement("span");
+    span.textContent = STATUS_META[key].label;
+    label.appendChild(cb);
+    label.appendChild(span);
+    statusCheckboxList.appendChild(label);
+  }});
+}}
+renderStatusCheckboxes();
+
+statusFilterBtn.addEventListener("click", () => {{
+  statusFilterPanel.classList.toggle("hidden");
+}});
+document.addEventListener("click", (e) => {{
+  if (!document.getElementById("statusFilterWrap").contains(e.target)) {{
+    statusFilterPanel.classList.add("hidden");
+  }}
+}});
+statusSelectAll.addEventListener("click", () => {{
+  STATUS_ORDER.forEach(k => selectedStatuses.add(k));
+  updateStatusLabel();
+  renderStatusCheckboxes();
+  renderTable();
+}});
+statusSelectNone.addEventListener("click", () => {{
+  selectedStatuses.clear();
+  updateStatusLabel();
+  renderStatusCheckboxes();
+  renderTable();
+}});
+
 function getFiltered() {{
   const s = shiftFilter.value;
   const q = searchBox.value.trim().toLowerCase();
-  const st = statusFilter.value;
   let rows = RAW_DATA.filter(r => {{
     if (activeTab === "flex" && (r.shift !== "S7" || !r.on_clock)) return false;
     if (selectedManagers.size > 0 && !selectedManagers.has(r.manager)) return false;
     if (s && r.shift !== s) return false;
-    if (st && r.status !== st) return false;
+    if (selectedStatuses.size > 0 && !selectedStatuses.has(r.status)) return false;
     if (q && !(r.name.toLowerCase().includes(q) || r.course.toLowerCase().includes(q))) return false;
     return true;
   }});
@@ -489,14 +562,6 @@ function getFiltered() {{
   }});
   return rows;
 }}
-
-const STATUS_META = {{
-  overdue: {{ label: "Past Due", badge: "bg-red-100 text-red-700", row: "bg-red-50" }},
-  due_7: {{ label: "Due in 7 Days", badge: "bg-orange-100 text-orange-800", row: "bg-orange-50" }},
-  due_14: {{ label: "Due in 14 Days", badge: "bg-amber-100 text-amber-800", row: "" }},
-  due_30: {{ label: "Due in 30 Days", badge: "bg-cyan-100 text-cyan-800", row: "" }},
-  due_60: {{ label: "Due in 60 Days", badge: "bg-slate-100 text-slate-700", row: "" }},
-}};
 
 function renderTable() {{
   const rows = getFiltered();
@@ -591,14 +656,16 @@ function renderInsights(rows) {{
   `;
 }}
 
-[shiftFilter, searchBox, statusFilter].forEach(el => {{
+const simpleFilterInputs = [shiftFilter, searchBox];
+simpleFilterInputs.forEach(el => {{
   el.addEventListener("input", renderTable);
   el.addEventListener("change", renderTable);
 }});
 
 document.getElementById("clearFilters").addEventListener("click", () => {{
-  shiftFilter.value = ""; searchBox.value = ""; statusFilter.value = "";
+  shiftFilter.value = ""; searchBox.value = "";
   selectedManagers.clear(); updateManagerLabel(); renderManagerCheckboxes();
+  selectedStatuses.clear(); updateStatusLabel(); renderStatusCheckboxes();
   requestAnimationFrame(() => requestAnimationFrame(renderTable));
 }});
 
