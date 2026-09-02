@@ -12,6 +12,9 @@ compliance trainings — filterable by **Manager** and **Shift**.
 - Renders a single static `ulearn_dashboard.html` file with:
   - Executive summary cards (Total Pending, Associates Affected, Managers Involved, Past Due)
   - Filters: Manager, Shift, free-text search, "Past due only" toggle
+  - **Download Excel** button that exports exactly what's currently filtered/visible
+    (including the active tab -- All Associates or Flex on Clock) to a `.xlsx` file,
+    named `ulearn_pending_trainings_<date>.xlsx`
   - Bar charts: pending items by shift, top 10 managers by pending count
   - Sortable, scrollable detail table
   - Executive insights blurb that recalculates live as you filter

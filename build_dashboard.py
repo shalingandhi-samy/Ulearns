@@ -143,6 +143,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {{ --wm-blue: #0053e2; --wm-spark: #ffc220; }}
   body {{ font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }}
@@ -228,6 +229,9 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <label for="overdueOnly" class="text-sm text-gray-700">Past due only</label>
       </div>
       <button id="clearFilters" class="text-sm text-[#0053e2] font-semibold hover:underline pb-2">Clear filters</button>
+      <button id="downloadExcel" class="flex items-center gap-1 text-sm bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-3 py-2">
+        Download Excel
+      </button>
     </div>
   </section>
 
@@ -520,6 +524,30 @@ document.querySelectorAll("th.sortable").forEach(th => {{
     renderTable();
   }});
 }});
+
+function downloadExcel() {{
+  const rows = getFiltered();
+  const exportRows = rows.map(r => ({{
+    "Associate Name": r.name,
+    "Shift": r.shift,
+    "Role / Shift Detail": r.shift_raw,
+    "Pending ULearn": r.course,
+    "Due Date": r.due,
+    "Past Due": r.overdue ? "Yes" : "No",
+    "Manager": r.manager,
+  }}));
+  const sheetName = activeTab === "flex" ? "Flex On Clock" : "All Associates";
+  const ws = XLSX.utils.json_to_sheet(exportRows);
+  ws["!cols"] = [
+    {{ wch: 22 }}, {{ wch: 8 }}, {{ wch: 30 }}, {{ wch: 40 }}, {{ wch: 12 }}, {{ wch: 10 }}, {{ wch: 22 }},
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const stamp = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `ulearn_pending_trainings_${{stamp}}.xlsx`);
+}}
+
+document.getElementById("downloadExcel").addEventListener("click", downloadExcel);
 
 renderTable();
 </script>
