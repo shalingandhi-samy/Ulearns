@@ -34,13 +34,17 @@ def parse_date(s: str):
         return None
 
 
+def norm_name(s: str) -> str:
+    # Normalize for matching: uppercase, strip anything that isn't a
+    # letter/digit/space (hyphens, apostrophes, etc). Handles cases like
+    # 'ROSE-BERLANDE DES' vs 'ROSEBERLANDE DESINOR' referring to the same person.
+    return re.sub(r"[^A-Z0-9 ]", "", s.upper()).strip()
+
+
 def name_candidates(full_name: str):
-    """ULearn associate names are truncated to full given name(s) + first 3
-    letters of the surname (e.g. 'NATACHA ELIACIN' -> 'NATACHA ELI'). Given a
-    full name from an external roster (like Drax), generate every truncated
-    form so we can match it against the ULearn dataset's convention."""
-    words = full_name.upper().split()
-    out = {full_name.upper()}
+    normalized = norm_name(full_name)
+    words = normalized.split()
+    out = {normalized}
     for k in range(1, len(words)):
         given = " ".join(words[:k])
         out.add(f"{given} {words[k][:3]}")
@@ -84,7 +88,7 @@ def main():
             due_dt = parse_date(due_raw)
             shift_code = extract_shift(shift_raw)
             overdue = bool(due_dt and due_dt < TODAY)
-            onclock_row = onclock_lookup.get(name.upper())
+            onclock_row = onclock_lookup.get(norm_name(name))
             rows.append({
                 "name": name,
                 "shift_raw": shift_raw,
