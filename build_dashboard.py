@@ -87,18 +87,31 @@ def main():
                 continue
             due_dt = parse_date(due_raw)
             shift_code = extract_shift(shift_raw)
-            # Source now tags status explicitly via "Late" / "Next 7 Days"
+            # Source tags status explicitly via "Late" / "Next 7/14/30/60 Days"
             # flag columns (marked with an "X") instead of leaving it to us to
-            # compute purely from the due date. Trust the source flag when
-            # present; fall back to a computed date comparison for older-style
-            # CSVs that don't have a Late column at all.
-            late_flag = r.get("Late", "").strip().upper()
-            due_soon_flag = r.get("DueSoon7", "").strip().upper()
+            # compute purely from the due date. Priority order matches urgency:
+            # a row overdue AND coincidentally flagged "Next 30 Days" (shouldn't
+            # happen, but be defensive) is still "overdue" first and foremost.
             if "Late" in r:
-                overdue = late_flag == "X"
+                status = ""
+                for flag_col, label in [
+                    ("Late", "overdue"),
+                    ("DueSoon7", "due_7"),
+                    ("DueSoon14", "due_14"),
+                    ("DueSoon30", "due_30"),
+                    ("DueSoon60", "due_60"),
+                ]:
+                    if r.get(flag_col, "").strip().upper() == "X":
+                        status = label
+                        break
+                overdue = status == "overdue"
+                due_soon = status == "due_7"
             else:
+                # Older-style CSV without flag columns at all -- fall back to a
+                # computed date comparison so this still degrades gracefully.
                 overdue = bool(due_dt and due_dt < TODAY)
-            due_soon = due_soon_flag == "X"
+                due_soon = False
+                status = "overdue" if overdue else ""
             onclock_row = onclock_lookup.get(norm_name(name))
             rows.append({
                 "name": name,
@@ -110,6 +123,7 @@ def main():
                 "manager": manager,
                 "overdue": overdue,
                 "due_soon": due_soon,
+                "status": status,
                 "on_clock": onclock_row is not None,
             })
 
@@ -118,6 +132,9 @@ def main():
     unique_managers = len({r["manager"] for r in rows if r["manager"] != "Unassigned"})
     overdue_count = sum(1 for r in rows if r["overdue"])
     due_soon_count = sum(1 for r in rows if r["due_soon"])
+    due_14_count = sum(1 for r in rows if r["status"] == "due_14")
+    due_30_count = sum(1 for r in rows if r["status"] == "due_30")
+    due_60_count = sum(1 for r in rows if r["status"] == "due_60")
     shifts = sorted({r["shift"] for r in rows}, key=lambda s: (s == "N/A", s))
     managers = sorted({r["manager"] for r in rows})
 
@@ -141,11 +158,16 @@ def main():
         unique_managers=unique_managers,
         overdue_count=overdue_count,
         due_soon_count=due_soon_count,
+        due_14_count=due_14_count,
+        due_30_count=due_30_count,
+        due_60_count=due_60_count,
         today_str=TODAY.strftime("%B %d, %Y"),
         onclock_note=onclock_note,
     )
     OUT_PATH.write_text(html, encoding="utf-8")
-    print(f"Wrote {OUT_PATH} ({total} rows, {unique_assoc} associates, {overdue_count} overdue, {due_soon_count} due in 7 days, {onclock_count} on-clock flex names loaded)")
+    print(f"Wrote {OUT_PATH} ({total} rows, {unique_assoc} associates, {overdue_count} overdue, "
+          f"{due_soon_count} due in 7 days, {due_14_count} due in 14 days, {due_30_count} due in 30 days, "
+          f"{due_60_count} due in 60 days, {onclock_count} on-clock flex names loaded)")
 
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
@@ -188,7 +210,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div id="onclockNote" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{onclock_note}</div>
 
   <!-- Executive Insights (top) -->
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+  <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div class="bg-white rounded-xl shadow p-4 border-l-4 border-[#0053e2]">
       <p class="text-xs text-gray-500 uppercase tracking-wide">Total Pending</p>
       <p class="text-3xl font-bold text-[#0053e2]" id="cardTotal">{total}</p>
@@ -204,15 +226,29 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <p class="text-3xl font-bold text-purple-700" id="cardMgrs">{unique_managers}</p>
       <p class="text-xs text-gray-400 mt-1">distinct managers in current view</p>
     </div>
+  </section>
+
+  <!-- Status buckets -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
     <div class="bg-white rounded-xl shadow p-4 border-l-4 border-red-600">
       <p class="text-xs text-gray-500 uppercase tracking-wide">Past Due</p>
-      <p class="text-3xl font-bold text-red-600" id="cardOverdue">{overdue_count}</p>
-      <p class="text-xs text-gray-400 mt-1">already overdue as of {today_str}</p>
+      <p class="text-2xl font-bold text-red-600" id="cardStatusOverdue">{overdue_count}</p>
     </div>
-    <div class="bg-white rounded-xl shadow p-4 border-l-4 border-amber-500">
+    <div class="bg-white rounded-xl shadow p-4 border-l-4 border-orange-500">
       <p class="text-xs text-gray-500 uppercase tracking-wide">Due in 7 Days</p>
-      <p class="text-3xl font-bold text-amber-600" id="cardDueSoon">{due_soon_count}</p>
-      <p class="text-xs text-gray-400 mt-1">coming due soon, not yet past due</p>
+      <p class="text-2xl font-bold text-orange-600" id="cardDueSoon">{due_soon_count}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 border-l-4 border-amber-400">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Due in 14 Days</p>
+      <p class="text-2xl font-bold text-amber-600" id="cardDue14">{due_14_count}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 border-l-4 border-cyan-500">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Due in 30 Days</p>
+      <p class="text-2xl font-bold text-cyan-600" id="cardDue30">{due_30_count}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 border-l-4 border-slate-400">
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Due in 60 Days</p>
+      <p class="text-2xl font-bold text-slate-600" id="cardDue60">{due_60_count}</p>
     </div>
   </section>
 
@@ -243,13 +279,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <label for="searchBox" class="block text-xs font-semibold text-gray-500 mb-1">Search (name or course)</label>
         <input id="searchBox" type="text" placeholder="Type to search..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
       </div>
-      <div class="flex items-center gap-2 pb-2">
-        <input id="overdueOnly" type="checkbox" class="w-4 h-4 accent-red-600">
-        <label for="overdueOnly" class="text-sm text-gray-700">Past due only</label>
-      </div>
-      <div class="flex items-center gap-2 pb-2">
-        <input id="dueSoonOnly" type="checkbox" class="w-4 h-4 accent-amber-500">
-        <label for="dueSoonOnly" class="text-sm text-gray-700">Due in 7 days only</label>
+      <div class="flex-1 min-w-[160px]">
+        <label for="statusFilter" class="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+        <select id="statusFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
+          <option value="">All Statuses</option>
+          <option value="overdue">Past Due</option>
+          <option value="due_7">Due in 7 Days</option>
+          <option value="due_14">Due in 14 Days</option>
+          <option value="due_30">Due in 30 Days</option>
+          <option value="due_60">Due in 60 Days</option>
+        </select>
       </div>
       <button id="clearFilters" class="text-sm text-[#0053e2] font-semibold hover:underline pb-2">Clear filters</button>
       <button id="downloadExcel" class="flex items-center gap-1 text-sm bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-3 py-2">
@@ -319,8 +358,7 @@ let activeTab = "all";
 
 const shiftFilter = document.getElementById("shiftFilter");
 const searchBox = document.getElementById("searchBox");
-const overdueOnly = document.getElementById("overdueOnly");
-const dueSoonOnly = document.getElementById("dueSoonOnly");
+const statusFilter = document.getElementById("statusFilter");
 const tableBody = document.getElementById("tableBody");
 const rowCount = document.getElementById("rowCount");
 const tabButtons = document.querySelectorAll(".tab-btn");
@@ -434,14 +472,12 @@ managerSelectNone.addEventListener("click", () => {{
 function getFiltered() {{
   const s = shiftFilter.value;
   const q = searchBox.value.trim().toLowerCase();
-  const od = overdueOnly.checked;
-  const ds = dueSoonOnly.checked;
+  const st = statusFilter.value;
   let rows = RAW_DATA.filter(r => {{
     if (activeTab === "flex" && (r.shift !== "S7" || !r.on_clock)) return false;
     if (selectedManagers.size > 0 && !selectedManagers.has(r.manager)) return false;
     if (s && r.shift !== s) return false;
-    if (od && !r.overdue) return false;
-    if (ds && !r.due_soon) return false;
+    if (st && r.status !== st) return false;
     if (q && !(r.name.toLowerCase().includes(q) || r.course.toLowerCase().includes(q))) return false;
     return true;
   }});
@@ -454,14 +490,21 @@ function getFiltered() {{
   return rows;
 }}
 
+const STATUS_META = {{
+  overdue: {{ label: "Past Due", badge: "bg-red-100 text-red-700", row: "bg-red-50" }},
+  due_7: {{ label: "Due in 7 Days", badge: "bg-orange-100 text-orange-800", row: "bg-orange-50" }},
+  due_14: {{ label: "Due in 14 Days", badge: "bg-amber-100 text-amber-800", row: "" }},
+  due_30: {{ label: "Due in 30 Days", badge: "bg-cyan-100 text-cyan-800", row: "" }},
+  due_60: {{ label: "Due in 60 Days", badge: "bg-slate-100 text-slate-700", row: "" }},
+}};
+
 function renderTable() {{
   const rows = getFiltered();
   rowCount.textContent = rows.length;
   tableBody.innerHTML = rows.map(r => {{
-    const rowBg = r.overdue ? 'bg-red-50' : (r.due_soon ? 'bg-amber-50' : '');
-    const statusBadge = r.overdue
-      ? '<span class="badge bg-red-100 text-red-700">Past Due</span>'
-      : (r.due_soon ? '<span class="badge bg-amber-100 text-amber-800">Due in 7 Days</span>' : '');
+    const meta = STATUS_META[r.status];
+    const rowBg = meta ? meta.row : "";
+    const statusBadge = meta ? `<span class="badge ${{meta.badge}}">${{meta.label}}</span>` : "";
     return `
     <tr class="border-b border-gray-100 hover:bg-blue-50 ${{rowBg}}">
       <td class="px-3 py-2">${{r.name}}</td>
@@ -483,8 +526,11 @@ function renderCards(rows) {{
   document.getElementById("cardTotal").textContent = rows.length;
   document.getElementById("cardAssoc").textContent = new Set(rows.map(r => r.name)).size;
   document.getElementById("cardMgrs").textContent = new Set(rows.filter(r => r.manager !== "Unassigned").map(r => r.manager)).size;
-  document.getElementById("cardOverdue").textContent = rows.filter(r => r.overdue).length;
-  document.getElementById("cardDueSoon").textContent = rows.filter(r => r.due_soon).length;
+  document.getElementById("cardStatusOverdue").textContent = rows.filter(r => r.status === "overdue").length;
+  document.getElementById("cardDueSoon").textContent = rows.filter(r => r.status === "due_7").length;
+  document.getElementById("cardDue14").textContent = rows.filter(r => r.status === "due_14").length;
+  document.getElementById("cardDue30").textContent = rows.filter(r => r.status === "due_30").length;
+  document.getElementById("cardDue60").textContent = rows.filter(r => r.status === "due_60").length;
 }}
 
 let shiftChart, managerChart;
@@ -522,8 +568,11 @@ function renderInsights(rows) {{
     list.innerHTML = "<li>No records match the current filters.</li>";
     return;
   }}
-  const overdue = rows.filter(r => r.overdue).length;
-  const dueSoon = rows.filter(r => r.due_soon).length;
+  const overdue = rows.filter(r => r.status === "overdue").length;
+  const due7 = rows.filter(r => r.status === "due_7").length;
+  const due14 = rows.filter(r => r.status === "due_14").length;
+  const due30 = rows.filter(r => r.status === "due_30").length;
+  const due60 = rows.filter(r => r.status === "due_60").length;
   const byCourse = {{}};
   rows.forEach(r => byCourse[r.course] = (byCourse[r.course] || 0) + 1);
   const topCourse = Object.entries(byCourse).sort((a,b) => b[1]-a[1])[0];
@@ -535,20 +584,20 @@ function renderInsights(rows) {{
   const topShift = Object.entries(bySh).sort((a,b) => b[1]-a[1])[0];
 
   list.innerHTML = `
-    <li><strong>${{rows.length}}</strong> pending course assignments in current view, <strong>${{overdue}}</strong> already past due, <strong>${{dueSoon}}</strong> due within 7 days.</li>
+    <li><strong>${{rows.length}}</strong> pending course assignments in current view: <strong>${{overdue}}</strong> past due, <strong>${{due7}}</strong> due in 7 days, <strong>${{due14}}</strong> due in 14 days, <strong>${{due30}}</strong> due in 30 days, <strong>${{due60}}</strong> due in 60 days.</li>
     <li>Most common outstanding course: <strong>${{topCourse[0]}}</strong> (${{topCourse[1]}} assignments).</li>
     <li>Manager with the most pending items: <strong>${{topMgr[0]}}</strong> (${{topMgr[1]}} assignments).</li>
     <li>Shift with the most pending items: <strong>${{topShift[0]}}</strong> (${{topShift[1]}} assignments).</li>
   `;
 }}
 
-[shiftFilter, searchBox, overdueOnly, dueSoonOnly].forEach(el => {{
+[shiftFilter, searchBox, statusFilter].forEach(el => {{
   el.addEventListener("input", renderTable);
   el.addEventListener("change", renderTable);
 }});
 
 document.getElementById("clearFilters").addEventListener("click", () => {{
-  shiftFilter.value = ""; searchBox.value = ""; overdueOnly.checked = false; dueSoonOnly.checked = false;
+  shiftFilter.value = ""; searchBox.value = ""; statusFilter.value = "";
   selectedManagers.clear(); updateManagerLabel(); renderManagerCheckboxes();
   requestAnimationFrame(() => requestAnimationFrame(renderTable));
 }});
@@ -569,7 +618,7 @@ function downloadExcel() {{
     "Role / Shift Detail": r.shift_raw,
     "Pending ULearn": r.course,
     "Due Date": r.due,
-    "Status": r.overdue ? "Past Due" : (r.due_soon ? "Due in 7 Days" : ""),
+    "Status": STATUS_META[r.status] ? STATUS_META[r.status].label : "",
     "Manager": r.manager,
   }}));
   const sheetName = activeTab === "flex" ? "Flex On Clock" : "All Associates";

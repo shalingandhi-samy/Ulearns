@@ -7,3 +7,6 @@ ulearn_data.csv
 raw_ulearn_export.csv
 flex_onclock.csv
 *.xlsx
+raw_chunks/
+process_partial.py
+source_ulearn.xlsx

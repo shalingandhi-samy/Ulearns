@@ -8,12 +8,14 @@ compliance trainings — filterable by **Manager** and **Shift**.
 - Ingests a CSV export of pending ULearn assignments (Associate Name, Shift, Course,
   Due Date, Manager, Late flag, Due-in-7-days flag)
 - Parses out the shift code (`S1`–`S7`) from the raw shift/role text
-- Buckets each pending item into **Past Due** or **Due in 7 Days** using the source
-  file's own `Late` / `Next 7 Days` flag columns (trusted as authoritative, since
-  that's what the source system itself considers due-soon vs. overdue)
+- Buckets each pending item into **Past Due / Due in 7 / 14 / 30 / 60 Days** using
+  the source file's own status flag columns (trusted as authoritative, since that's
+  what the source system itself considers due-soon vs. overdue)
 - Renders a single static `ulearn_dashboard.html` file with:
-  - Executive summary cards (Total Pending, Associates Affected, Managers Involved, Past Due)
-  - Filters: Manager, Shift, free-text search, "Past due only" toggle
+  - Executive summary cards (Total Pending, Associates Affected, Managers Involved)
+    plus a 5-card status-bucket row (Past Due / 7 / 14 / 30 / 60 Days)
+  - Filters: Manager, Shift, free-text search, Status dropdown (All / Past Due /
+    Due in 7 / 14 / 30 / 60 Days)
   - **Download Excel** button that exports exactly what's currently filtered/visible
     (including the active tab -- All Associates or Flex on Clock) to a `.xlsx` file,
     named `ulearn_pending_trainings_<date>.xlsx`
@@ -30,24 +32,46 @@ open it in a browser or host it anywhere static files are served (e.g. Puppy Pag
 WIN, User ID, Job Description, Item Name, Due Date, Late, Next 7 Days,
 Next 14 Days, Next 30 Days, Next 60 Days, Manager, Position`)
 
-As of Sept 2026 the source workbook has 13 columns instead of 5 -- it now flags
-status explicitly via `X` marks in `Late` / `Next 7 Days` / `Next 14 Days` /
-`Next 30 Days` / `Next 60 Days` columns. Only `Late` and `Next 7 Days` are used
-today (the dashboard only buckets into Past Due / Due in 7 Days); the others are
-ignored for now but easy to wire in later. `WIN`, `User ID`, and `Position` are
-also currently ignored.
+The source workbook has 13 columns, flagging status explicitly via X marks in
+Late / Next 7 Days / Next 14 Days / Next 30 Days / Next 60 Days. All five are
+used now (the dashboard buckets into all 5 statuses). WIN, User ID, and
+Position are still ignored for the CSV output, but WIN is used internally as a
+sanity-check identity anchor (see "Duplicate rows" below).
 
-1. Pull the sheet data into `raw_ulearn_export.csv` (same 5 raw columns, Due Date
-   as the Excel serial number).
-2. Convert it into the dashboard's format:
+**Preferred: read the workbook directly.** If the source file is synced locally
+via OneDrive (check the user's OneDrive folder -- a recursive search for
+`*ulearn*.xlsx` finds it fast), point `SRC_XLSX` in `convert_export.py` at that
+local path and just run:
 
-   ```bash
-   python convert_export.py
-   ```
+```bash
+uv venv --python 3.11
+uv pip install --python .venv\Scripts\python.exe --index-url https://pypi.ci.artifacts.walmart.com/artifactory/api/pypi/external-pypi/simple --allow-insecure-host pypi.ci.artifacts.walmart.com pandas openpyxl
+.venv\Scripts\python.exe convert_export.py
+.venv\Scripts\python.exe build_dashboard.py
+```
 
-   This maps columns to `Associate Name, Shift, Ulearn, Due Date, Managers` and
-   converts Excel serial dates to `MM/DD/YYYY`.
-3. Regenerate the dashboard: `python build_dashboard.py`.
+pandas reads all ~1,800 rows in one shot, in a couple of seconds. **Do not**
+fetch this data by asking a chat-based Graph/msgraph agent to paste rows into
+chat -- that path is bottlenecked by a ~10,000-character tool-output truncation
+regardless of chunk size, so it requires dozens of small, error-prone manual
+chunks (missed/duplicated columns, serial-vs-string date drift, chunk-boundary
+overlap). If the workbook is open in Excel you'll get a PermissionError --
+close it first.
+
+**Fallback (no local file access):** pull the sheet data manually into
+`raw_ulearn_export.csv` (same 10 columns, Due Date as either an Excel serial
+number or M/D/YYYY string -- both are handled) and run `python
+convert_export.py`; it'll use the CSV automatically if the xlsx path isn't found.
+
+### Duplicate rows
+
+The raw export routinely contains the *same* real assignment (same WIN, same
+course, same due date, same manager) listed multiple times -- confirmed via two
+independent dedup keys (name-based and WIN-based) landing on the identical
+unique-row count. `convert_export.py` drops exact repeats on
+`(Associate, Job Description, Item Name, Due Date, Manager)`. This is *not* a
+name-truncation collision (different real people sharing a display name) --
+it's the source data itself repeating the same requirement.
 
 ### From an already-formatted CSV
 
