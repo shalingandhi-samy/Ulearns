@@ -1,7 +1,15 @@
 """
-One-off converter: raw_ulearn_export.csv (Associate, Job Description, Item Name,
-Due Date [Excel serial], Manager) -> ulearn_data.csv (Associate Name, Shift,
-Ulearn, Due Date [MM/DD/YYYY], Managers) as expected by build_dashboard.py.
+One-off converter: raw_ulearn_export.csv -> ulearn_data.csv (Associate Name,
+Shift, Ulearn, Due Date [MM/DD/YYYY], Managers, Late, DueSoon7) as expected by
+build_dashboard.py.
+
+Source format (as of Sept 2026): 13 columns --
+Associate, WIN, User ID, Job Description, Item Name, Due Date, Late,
+Next 7 Days, Next 14 Days, Next 30 Days, Next 60 Days, Manager, Position
+
+Only Late and Next 7 Days are carried through today (the dashboard buckets
+pending items into "Past Due" and "Due in 7 Days"). Next 14/30/60 Days and
+Position are ignored for now -- easy to wire in later if a need shows up.
 """
 import csv
 from datetime import datetime, timedelta
@@ -33,6 +41,16 @@ def serial_to_date(serial: str) -> str:
         return serial
 
 
+def get(row: dict, *names: str) -> str:
+    """Source column headers sometimes carry stray trailing spaces (e.g.
+    'Late ', 'Next 14 Days '). Try each candidate name, stripped or not."""
+    for name in names:
+        for key in (name, f"{name} ", name.strip()):
+            if key in row:
+                return row[key].strip()
+    return ""
+
+
 def main():
     with SRC.open(newline="", encoding="utf-8") as f_in:
         reader = csv.DictReader(f_in)
@@ -44,8 +62,8 @@ def main():
     seen = set()
     deduped = []
     for r in rows:
-        key = (r["Associate"].strip(), r["Job Description"].strip(),
-               r["Item Name"].strip(), r["Due Date"].strip(), r["Manager"].strip())
+        key = (get(r, "Associate"), get(r, "Job Description"),
+               get(r, "Item Name"), get(r, "Due Date"), get(r, "Manager"))
         if key in seen:
             continue
         seen.add(key)
@@ -54,14 +72,16 @@ def main():
 
     with DST.open("w", newline="", encoding="utf-8") as f_out:
         writer = csv.writer(f_out)
-        writer.writerow(["Associate Name", "Shift", "Ulearn", "Due Date", "Managers"])
+        writer.writerow(["Associate Name", "Shift", "Ulearn", "Due Date", "Managers", "Late", "DueSoon7"])
         for r in deduped:
             writer.writerow([
-                r["Associate"].strip(),
-                r["Job Description"].strip(),
-                r["Item Name"].strip(),
-                serial_to_date(r["Due Date"]),
-                r["Manager"].strip(),
+                get(r, "Associate"),
+                get(r, "Job Description"),
+                get(r, "Item Name"),
+                serial_to_date(get(r, "Due Date")),
+                get(r, "Manager"),
+                get(r, "Late"),
+                get(r, "Next 7 Days"),
             ])
 
     print(f"Wrote {DST} ({len(deduped)} rows, {dupe_count} exact-duplicate rows dropped)")

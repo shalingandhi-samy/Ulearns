@@ -6,9 +6,11 @@ compliance trainings — filterable by **Manager** and **Shift**.
 ## What it does
 
 - Ingests a CSV export of pending ULearn assignments (Associate Name, Shift, Course,
-  Due Date, Manager)
+  Due Date, Manager, Late flag, Due-in-7-days flag)
 - Parses out the shift code (`S1`–`S7`) from the raw shift/role text
-- Flags items that are already past due
+- Buckets each pending item into **Past Due** or **Due in 7 Days** using the source
+  file's own `Late` / `Next 7 Days` flag columns (trusted as authoritative, since
+  that's what the source system itself considers due-soon vs. overdue)
 - Renders a single static `ulearn_dashboard.html` file with:
   - Executive summary cards (Total Pending, Associates Affected, Managers Involved, Past Due)
   - Filters: Manager, Shift, free-text search, "Past due only" toggle
@@ -25,7 +27,15 @@ open it in a browser or host it anywhere static files are served (e.g. Puppy Pag
 ## Usage
 
 ### From a raw ULearn Excel export (e.g. `8.25 ulearn.xlsx`, columns: `Associate,
-Job Description, Item Name, Due Date, Manager`)
+WIN, User ID, Job Description, Item Name, Due Date, Late, Next 7 Days,
+Next 14 Days, Next 30 Days, Next 60 Days, Manager, Position`)
+
+As of Sept 2026 the source workbook has 13 columns instead of 5 -- it now flags
+status explicitly via `X` marks in `Late` / `Next 7 Days` / `Next 14 Days` /
+`Next 30 Days` / `Next 60 Days` columns. Only `Late` and `Next 7 Days` are used
+today (the dashboard only buckets into Past Due / Due in 7 Days); the others are
+ignored for now but easy to wire in later. `WIN`, `User ID`, and `Position` are
+also currently ignored.
 
 1. Pull the sheet data into `raw_ulearn_export.csv` (same 5 raw columns, Due Date
    as the Excel serial number).
