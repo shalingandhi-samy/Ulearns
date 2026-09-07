@@ -269,11 +269,18 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
           <div id="managerCheckboxList" class="space-y-1"></div>
         </div>
       </div>
-      <div class="flex-1 min-w-[150px]">
-        <label for="shiftFilter" class="block text-xs font-semibold text-gray-500 mb-1">Shift</label>
-        <select id="shiftFilter" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0053e2]">
-          <option value="">All Shifts</option>
-        </select>
+      <div class="flex-1 min-w-[150px] relative" id="shiftFilterWrap">
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Shift</label>
+        <button type="button" id="shiftFilterBtn" class="w-full text-left border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0053e2] disabled:bg-gray-100 disabled:text-gray-400">
+          <span id="shiftFilterLabel">All Shifts</span>
+        </button>
+        <div id="shiftFilterPanel" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+          <div class="flex justify-between text-xs mb-2">
+            <button type="button" id="shiftSelectAll" class="text-[#0053e2] font-semibold hover:underline">Select all</button>
+            <button type="button" id="shiftSelectNone" class="text-gray-500 font-semibold hover:underline">Clear</button>
+          </div>
+          <div id="shiftCheckboxList" class="space-y-1"></div>
+        </div>
       </div>
       <div class="flex-1 min-w-[220px]">
         <label for="searchBox" class="block text-xs font-semibold text-gray-500 mb-1">Search (name or course)</label>
@@ -357,6 +364,7 @@ let sortKey = "due_sort";
 let sortDir = 1;
 let selectedManagers = new Set();
 let selectedStatuses = new Set();
+let selectedShifts = new Set();
 let activeTab = "all";
 
 const STATUS_META = {{
@@ -368,7 +376,6 @@ const STATUS_META = {{
 }};
 const STATUS_ORDER = ["overdue", "due_7", "due_14", "due_30", "due_60"];
 
-const shiftFilter = document.getElementById("shiftFilter");
 const searchBox = document.getElementById("searchBox");
 const tableBody = document.getElementById("tableBody");
 const rowCount = document.getElementById("rowCount");
@@ -390,6 +397,13 @@ const statusCheckboxList = document.getElementById("statusCheckboxList");
 const statusSelectAll = document.getElementById("statusSelectAll");
 const statusSelectNone = document.getElementById("statusSelectNone");
 
+const shiftFilterBtn = document.getElementById("shiftFilterBtn");
+const shiftFilterPanel = document.getElementById("shiftFilterPanel");
+const shiftFilterLabel = document.getElementById("shiftFilterLabel");
+const shiftCheckboxList = document.getElementById("shiftCheckboxList");
+const shiftSelectAll = document.getElementById("shiftSelectAll");
+const shiftSelectNone = document.getElementById("shiftSelectNone");
+
 tabButtons.forEach(btn => {{
   btn.addEventListener("click", () => {{
     activeTab = btn.dataset.tab;
@@ -403,26 +417,23 @@ tabButtons.forEach(btn => {{
     // Flex tab is scoped to associates who are S7 (flex role) AND currently
     // on-clock per the Drax snapshot -- the shift dropdown would just be a
     // redundant/confusing no-op there, so reset + disable it.
+    // Flex tab is scoped to associates who are S7 (flex role) AND currently
+    // on-clock per the Drax snapshot -- the shift filter would just be a
+    // redundant/confusing no-op there, so reset + disable it.
     if (activeTab === "flex") {{
-      shiftFilter.value = "";
-      shiftFilter.disabled = true;
+      selectedShifts.clear();
+      updateShiftLabel();
+      renderShiftCheckboxes();
+      shiftFilterPanel.classList.add("hidden");
+      shiftFilterBtn.disabled = true;
       onclockNote.classList.remove("hidden");
     }} else {{
-      shiftFilter.disabled = false;
+      shiftFilterBtn.disabled = false;
       onclockNote.classList.add("hidden");
     }}
     renderTable();
   }});
 }});
-
-function populateSelect(sel, values) {{
-  values.forEach(v => {{
-    const opt = document.createElement("option");
-    opt.value = v; opt.textContent = v;
-    sel.appendChild(opt);
-  }});
-}}
-populateSelect(shiftFilter, SHIFTS);
 
 function updateManagerLabel() {{
   const n = selectedManagers.size;
@@ -543,13 +554,69 @@ statusSelectNone.addEventListener("click", () => {{
   renderTable();
 }});
 
+function updateShiftLabel() {{
+  const n = selectedShifts.size;
+  if (n === 0) {{
+    shiftFilterLabel.textContent = "All Shifts";
+  }} else if (n === 1) {{
+    shiftFilterLabel.textContent = [...selectedShifts][0];
+  }} else {{
+    shiftFilterLabel.textContent = n + " shifts selected";
+  }}
+}}
+
+function renderShiftCheckboxes() {{
+  shiftCheckboxList.innerHTML = "";
+  SHIFTS.forEach(sh => {{
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2 text-sm px-1 py-0.5 rounded hover:bg-blue-50 cursor-pointer";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "shiftCheckbox w-4 h-4 accent-[#0053e2]";
+    cb.value = sh;
+    cb.checked = selectedShifts.has(sh);
+    cb.addEventListener("change", () => {{
+      if (cb.checked) {{ selectedShifts.add(sh); }} else {{ selectedShifts.delete(sh); }}
+      updateShiftLabel();
+      renderTable();
+    }});
+    const span = document.createElement("span");
+    span.textContent = sh;
+    label.appendChild(cb);
+    label.appendChild(span);
+    shiftCheckboxList.appendChild(label);
+  }});
+}}
+renderShiftCheckboxes();
+
+shiftFilterBtn.addEventListener("click", () => {{
+  if (shiftFilterBtn.disabled) return;
+  shiftFilterPanel.classList.toggle("hidden");
+}});
+document.addEventListener("click", (e) => {{
+  if (!document.getElementById("shiftFilterWrap").contains(e.target)) {{
+    shiftFilterPanel.classList.add("hidden");
+  }}
+}});
+shiftSelectAll.addEventListener("click", () => {{
+  SHIFTS.forEach(sh => selectedShifts.add(sh));
+  updateShiftLabel();
+  renderShiftCheckboxes();
+  renderTable();
+}});
+shiftSelectNone.addEventListener("click", () => {{
+  selectedShifts.clear();
+  updateShiftLabel();
+  renderShiftCheckboxes();
+  renderTable();
+}});
+
 function getFiltered() {{
-  const s = shiftFilter.value;
   const q = searchBox.value.trim().toLowerCase();
   let rows = RAW_DATA.filter(r => {{
     if (activeTab === "flex" && (r.shift !== "S7" || !r.on_clock)) return false;
     if (selectedManagers.size > 0 && !selectedManagers.has(r.manager)) return false;
-    if (s && r.shift !== s) return false;
+    if (selectedShifts.size > 0 && !selectedShifts.has(r.shift)) return false;
     if (selectedStatuses.size > 0 && !selectedStatuses.has(r.status)) return false;
     if (q && !(r.name.toLowerCase().includes(q) || r.course.toLowerCase().includes(q))) return false;
     return true;
@@ -656,16 +723,17 @@ function renderInsights(rows) {{
   `;
 }}
 
-const simpleFilterInputs = [shiftFilter, searchBox];
+const simpleFilterInputs = [searchBox];
 simpleFilterInputs.forEach(el => {{
   el.addEventListener("input", renderTable);
   el.addEventListener("change", renderTable);
 }});
 
 document.getElementById("clearFilters").addEventListener("click", () => {{
-  shiftFilter.value = ""; searchBox.value = "";
+  searchBox.value = "";
   selectedManagers.clear(); updateManagerLabel(); renderManagerCheckboxes();
   selectedStatuses.clear(); updateStatusLabel(); renderStatusCheckboxes();
+  selectedShifts.clear(); updateShiftLabel(); renderShiftCheckboxes();
   requestAnimationFrame(() => requestAnimationFrame(renderTable));
 }});
 
